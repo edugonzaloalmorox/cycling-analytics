@@ -18,7 +18,7 @@ df_women = parse_startlist_info(url_women, 'Women Elite')
 links_men = get_rider_url(df_men)
 links_women = get_rider_url(df_women)
 
-# Get info for 
+# Get info for men and women
 results <- map_df(links_men, get_races_info)
 
 results_women <- map_df(links_women, get_races_info)

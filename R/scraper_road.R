@@ -50,78 +50,104 @@ df_links = as.data.frame(matrix_links_road ) %>%
   rename(link_rider = V1,
          link_team = V2, 
          link_points = V3) %>%
-  mutate(link_rider = as.character(paste0('https://www.procyclingstats.com/',link_rider)),
-         link_team = as.character(paste0('https://www.procyclingstats.com/', link_team)),
-         link_points = as.character(paste0('https://www.procyclingstats.com/', link_points))
+  mutate(link_rider = as.character(link_rider),
+         link_team = as.character( link_team),
+         link_points = as.character(link_points)
          ) 
 
 
 df_complete = df %>%
   bind_cols(df_links) %>%
-  as_tibble()
-
+  as_tibble() %>%
+  mutate(category = 'Men Elite')
 
 
 
 link_rider_lst = get_rider_url(df_complete, 'link_rider')
 
 
+results = map_df(link_rider_lst, get_races_info)
+results = map_df(link_rider_lst, test_get_races_info)
 
-"https://cx.procyclingstats.com/https://www.procyclingstats.com/rider/tadej-pogacar" %>%
+
+
+df_final = df_complete %>%
+   mutate(url = paste0('https://www.procyclingstats.com/', link_rider)) %>%
+  left_join(results, by = 'url')
+
+
+#### Women #####
+
+
+
+women_url = 'https://www.procyclingstats.com/rankings/we/world-ranking'
+
+df_women = women_url %>%
   read_html() %>%
-  html_node('.rdrResultsSum') %>%
+  html_nodes("table tbody") %>%
+  html_nodes("tr") %>%
+  html_nodes("td") %>% 
   html_text()
 
 
 
-test_df = map_df(link_rider_lst, get_races_info)
-  
+data_matrix_w  = matrix(df_women, ncol = 6, byrow = TRUE)
 
-df %>%
-  group_by(team) %>%
-  summarise(total_riders = n(),
-    mean_pts_team = mean(points),
-            total_pts_team = sum(points)) %>%
-  arrange(-total_pts_team) %>%
-  ungroup() %>%
-  ggplot(aes(mean_pts_team, total_pts_team)) +
-  geom_point(aes(size = total_riders), alpha=0.4) +
-  geom_text_repel(
-    aes(label = team),
-    family = "Roboto",
-    size =4,
-    min.segment.length = 0, 
-    seed = 42, 
-    box.padding = 0.5,
-    max.overlaps = Inf,
-    arrow = arrow(length = unit(0.010, "npc")),
-    nudge_x = .15,
-    nudge_y = .5,
-    color = "grey50"
-  ) +
-  geom_smooth(se = FALSE, alpha = 0.2) +
-  theme_cycling() +
-  labs(title = 'Total vs Average UCI points per team')
-  
-  
-  safe_scrape <- function(url) {
-    Sys.sleep(runif(1, 2, 5))  # Random delay between 2 and 5 seconds
-    tryCatch({
-      # Attempt to read the HTML content of the page
-      page <- read_html(url, handle = handle(url))
-      # Your parsing code goes here
-      # Example: content <- page %>% html_nodes("yourSelector") %>% html_text()
-      return(content)
-    }, error = function(e) {
-      # Return NA or a custom message in case of error
-      return(NA)
-    })
-  }
+df_w= as.data.frame(data_matrix_w) %>%
+  rename(number = V1,
+         prev = V2, 
+         diff = V3, 
+         rider = V4,
+         team = V5,
+         points = V6) %>%
+  mutate(number = as.integer(number),
+         prev = as.integer(prev),
+         diff = as.character(diff),
+         rider = as.character(rider), 
+         team = as.character(team),
+         points = as.numeric(points),
+  )
 
-test_urls = link_rider_lst[1:2]
 
-  
-results <- map(test_urls, safe_scrape)
+
+links_road_women = women_url %>%
+  read_html() %>%
+  html_nodes("table tbody") %>%
+  html_nodes("a") %>%
+  html_attr("href")
+
+
+matrix_links_women = matrix(links_road_women, ncol = 3, byrow = TRUE)
+
+df_links_w = as.data.frame(matrix_links_women ) %>%
+  rename(link_rider = V1,
+         link_team = V2, 
+         link_points = V3) %>%
+  mutate(link_rider = as.character(link_rider),
+         link_team = as.character( link_team),
+         link_points = as.character(link_points)
+  ) 
+
+
+df_complete_w = df_w %>%
+  bind_cols(df_links_w) %>%
+  as_tibble() %>%
+  mutate(category = 'Women Elite')
+
+
+link_w_lst = get_rider_url(df_complete_w, 'link_rider')
+
+
+results_w = map_df(link_w_lst, test_get_races_info)
+
+df_final_w = df_complete_w %>%
+  mutate(url = paste0('https://www.procyclingstats.com/', link_rider)) %>%
+  left_join(results_w, by = 'url')
+
+
+df_plot = df_final %>% bind_rows(df_final_w)
+
+
 
 
 
