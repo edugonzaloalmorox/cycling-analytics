@@ -3,6 +3,7 @@ library(tidytext)
 
 source('R/utils.R')
 
+
 path = 'data/processed/'
 discipline = 'cyclocross_'
 
@@ -34,6 +35,5 @@ df_plot %>%
   theme_cycling() +
   labs(title = 'Who is the most efficient rider in CX?',
        subtitle = 'Rider PCS points per CX race competed in 2023/24 season - Top 25',
-       caption = 'Source: Pro Cycling Stats 
-       \n @EdudinGonzalo',
+       caption = 'Source: Pro Cycling Stats | @EdudinGonzalo',
        x = '', y = '')
